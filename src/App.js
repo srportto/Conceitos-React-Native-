@@ -1,4 +1,4 @@
-import React from "react";
+import React,{useEffect, useState} from "react";
 
 import {
   SafeAreaView,
@@ -10,16 +10,142 @@ import {
   TouchableOpacity,
 } from "react-native";
 
+import api from './services/api'
+
 export default function App() {
+
+  const [repositories, setRepositories] = useState([]);
+
+  useEffect (() => {
+    api.get('repositories').then(response => {
+      console.log(response.data);
+      setRepositories(response.data);
+    });
+  },[]); // A função useEffect() irá dispárar quando as variaveis do array [] mudarem, como nao há nenhuma variavel dentro ele executará uma unica vez
+
+
+
+  
+
   async function handleLikeRepository(id) {
-    // Implement "Like Repository" functionality
+
+    let response = await api.post(`repositories/${id}/like`);
+    //let repository = response.data;
+
+    //console.log(response.status);;
+
+    if(response.status === 200){
+           
+      // // captura a posição de um vetor 
+      const repositoryIndex = repositories.findIndex(repository => repository.id === id);
+
+      // if ( repositoryIndex < 0){
+      //   return response.status(404).json({error: 'Repository not found.'});
+    
+      // }
+
+      const repositoriesAtual = repositories;
+
+      repositoriesAtual[repositoryIndex] = response.data;
+                  
+       setRepositories([...repositoriesAtual]);
+    }
+
   }
+
+  function exibirLikes (qtdeLikes){
+    if (qtdeLikes === 1){
+      return `${qtdeLikes} curtida`;
+    } else {
+      return `${qtdeLikes} curtidas`;
+    }
+  }
+
+
+
 
   return (
     <>
       <StatusBar barStyle="light-content" backgroundColor="#7159c1" />
       <SafeAreaView style={styles.container}>
-        <View style={styles.repositoryContainer}>
+        <FlatList
+          data={repositories}
+          keyExtractor={repository => repository.id}
+          
+
+          renderItem={({item: repository}) => (
+            <>
+              <View key={repository.title} style={styles.repositoryContainer}>
+                <Text style={styles.repository} > {repository.title}</Text>
+
+                <FlatList 
+                  data={repository.techs}
+                  keyExtractor={repository => repository.id}
+                  style={styles.techsContainer}
+                  
+                  renderItem={({item: tech}) => (
+                    <Text style={styles.tech} >{tech} </Text>
+                  )}                       
+                />
+
+
+
+                {/* container para exibicao da quantidade de likes  */}
+                <View style={styles.likesContainer} >
+                  <Text
+                   
+                    style={styles.likeText}
+                    // Remember to replace "1" below with repository ID: {`repository-likes-${repository.id}`}
+                    testID={`repository-likes-${repository.id}`}
+                  >
+                    {`${exibirLikes(repository.likes)}`}
+                  </Text>
+                </View>
+
+
+                {/* botao para acao de dar like  */}
+                <TouchableOpacity
+                  
+                  style={styles.button}
+                  onPress={() => handleLikeRepository(repository.id)}
+                  // Remember to replace "1" below with repository ID: {`like-button-${repository.id}`}
+                  testID={`like-button-${repository.id}`}
+                >
+                  <Text style={styles.buttonText}>Curtir</Text>
+                </TouchableOpacity>
+
+              </View>
+            </> 
+          )}         
+        />
+
+
+
+       
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+      {/* >>>>>> Abaixo codigo antes da alteração idem modelo da rocketseat */}
+
+{/*       
+          <View style={styles.repositoryContainer}>
           <Text style={styles.repository}>Repository 1</Text>
 
           <View style={styles.techsContainer}>
@@ -49,7 +175,12 @@ export default function App() {
           >
             <Text style={styles.buttonText}>Curtir</Text>
           </TouchableOpacity>
-        </View>
+        </View> 
+        
+        */}
+        
+     
+
       </SafeAreaView>
     </>
   );
